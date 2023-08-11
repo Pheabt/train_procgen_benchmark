@@ -1,0 +1,2 @@
+average_entropy,average_policy_loss,average_value,average_value_loss,eplenmean,eprewmean,eval_eplenmean,eval_eprewmean,explained_variance,fps,n_updates,num_ppo_update,steps,total_steps
+2.7080498,-0.0024668544065207243,0.028062467,1.0493332135180633,60.357142857142854,1.0714285,87.9,1.7,-0.002333351704567388,642,24,1.0,256,1024
