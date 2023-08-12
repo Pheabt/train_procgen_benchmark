@@ -56,7 +56,6 @@ class ImpalaCNN(nn.Module):
     """Network from IMPALA paper, to work with pfrl."""
 
     def __init__(self, obs_space, num_outputs):
-
         super(ImpalaCNN, self).__init__()
 
         h, w, c = obs_space.shape
@@ -75,6 +74,10 @@ class ImpalaCNN(nn.Module):
         # Initialize weights of logits_fc
         nn.init.orthogonal_(self.logits_fc.weight, gain=0.01)
         nn.init.zeros_(self.logits_fc.bias)
+
+
+
+
 
     def forward(self, obs):
         assert obs.ndim == 4
@@ -96,3 +99,52 @@ class ImpalaCNN(nn.Module):
 
     def load_from_file(self, model_path):
         self.load_state_dict(torch.load(model_path))
+
+
+
+
+
+class SimpleCNN(nn.Module):
+    def __init__(self, obs_space, num_outputs):
+        super(SimpleCNN, self).__init__()
+
+
+        h, w, c = obs_space.shape
+        self.conv = nn.Sequential(
+            nn.Conv2d(c, 32, kernel_size=3, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+
+        with torch.no_grad():
+            output_shape = self.conv(torch.zeros(1, c, h, w)).shape[1]
+
+        self.hidden_fc = nn.Linear(in_features=output_shape,
+                                   out_features=256)
+        self.logits_fc = nn.Linear(in_features=256, out_features=num_outputs)
+        self.value_fc = nn.Linear(in_features=256, out_features=1)
+
+        # Initialize weights of logits_fc
+        nn.init.orthogonal_(self.logits_fc.weight, gain=0.01)
+        nn.init.zeros_(self.logits_fc.bias)
+
+    def forward(self, obs):
+        assert obs.ndim == 4
+        x = obs / 255.0  # scale to 0-1
+        x = x.permute(0, 3, 1, 2)  # NHWC => NCHW
+        x = self.conv(x)
+        x = self.hidden_fc(x)
+        x = torch.relu(x)
+        logits = self.logits_fc(x)
+        dist = torch.distributions.Categorical(logits=logits)
+        value = self.value_fc(x)
+        return dist, value
+
+    def save_to_file(self, model_path):
+        torch.save(self.state_dict(), model_path)
+
+    def load_from_file(self, model_path):
+        self.load_state_dict(torch.load(model_path))
+

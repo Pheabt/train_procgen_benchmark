@@ -11,8 +11,8 @@ from vec_env import VecMonitor
 from vec_env import VecNormalize
 from util import logger
 
-from policies import ImpalaCNN
-from ppo import PPO
+from algo.policies import ImpalaCNN, SimpleCNN
+from algo.ppo import PPO
 
 
 def parse_args():
@@ -208,10 +208,18 @@ def run():
     valid_venv = create_venv(configs, is_valid=True)
 
     # Create policy.
-    policy = ImpalaCNN(
+
+    policy = SimpleCNN(
         obs_space=train_venv.observation_space,
         num_outputs=train_venv.action_space.n,
     )
+
+
+
+    # policy = ImpalaCNN(
+    #     obs_space=train_venv.observation_space,
+    #     num_outputs=train_venv.action_space.n,
+    # )
 
     # Create agent and train.
     optimizer = torch.optim.Adam(policy.parameters(), lr=configs.lr, eps=1e-5)
