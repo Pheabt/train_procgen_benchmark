@@ -1,4 +1,11 @@
+
+#install
 import os
+import subprocess
+
+# Install PyTorch and its related packages
+torch_install_command = "pip3 install torch torchvision torchaudio"
+subprocess.call(torch_install_command, shell=True)
 
 # Define the required packages and versions
 packages = [
@@ -7,11 +14,17 @@ packages = [
     "setuptools==65.5.0",
     "gym==0.21",
     "procgen",
-    "torch==1.10.1+cu113",
-    "torchvision==0.11.2+cu113",
-    "torchaudio===0.10.1+cu113"
+    "packaging",
+    "pandas",
+    "matplotlib",
+    "wandb",
+    "gymnasium",
+    "tensorboard",
 ]
 
-# Install the specified packages
+# Install the required packages
 for package in packages:
-    os.system(f"pip install {package} -f https://download.pytorch.org/whl/cu113/torch_stable.html stable-baselines3[extra]")
+    install_command = f"pip3 install {package}"
+    subprocess.call(install_command, shell=True)
+
+print("Installation completed.")
