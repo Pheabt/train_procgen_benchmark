@@ -1,2 +1,7 @@
 /images/
 /log/
+/algo/__pycache__
+/pfrl/
+/util/__pycache__
+/vec_env/__pycache__
+/wandb/

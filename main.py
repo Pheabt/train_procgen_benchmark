@@ -14,6 +14,8 @@ from util import logger
 from algo.policies import ImpalaCNN, SimpleCNN
 from algo.ppo import PPO
 
+import wandb
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -170,6 +172,21 @@ def train(config, agent, train_env, test_env, model_dir):
                 logger.logkv(stats[0], stats[1])
             logger.dumpkvs()
 
+
+
+            wandb.log({"steps": step_cnt + 1})
+            wandb.log({"total_steps": (step_cnt + 1) * config.num_envs})
+            wandb.log({"fps": fps})
+            wandb.log({"num_ppo_update": num_ppo_updates})
+            wandb.log({"eprewmean": safe_mean([info['r'] for info in train_epinfo_buf])})
+            wandb.log({"eplenmean": safe_mean([info['l'] for info in train_epinfo_buf])})
+            wandb.log({"eval_eprewmean": safe_mean([info['r'] for info in test_epinfo_buf])})
+            wandb.log({"eval_eplenmean": safe_mean([info['l'] for info in test_epinfo_buf])})
+            train_stats = agent.get_statistics()
+            for stats in train_stats:
+                wandb.log({stats[0]: stats[1]})
+
+
             if num_ppo_updates % config.save_interval == 0:
                 model_path = os.path.join(
                     model_dir, 'model_{}.pt'.format(num_ppo_updates + 1))
@@ -201,6 +218,7 @@ def run():
         configs.method_label,
         configs.exp_name,
     )
+
     logger.configure(dir=log_dir, format_strs=['csv', 'stdout'])
 
     # Create venvs.
@@ -209,17 +227,21 @@ def run():
 
     # Create policy.
 
-    policy = SimpleCNN(
-        obs_space=train_venv.observation_space,
-        num_outputs=train_venv.action_space.n,
-    )
-
-
-
-    # policy = ImpalaCNN(
+    # policy = SimpleCNN(
     #     obs_space=train_venv.observation_space,
     #     num_outputs=train_venv.action_space.n,
     # )
+    wandb_name = f"{configs.exp_name}_{configs.env_name}_{configs.num_levels}_{configs.distribution_mode}_{configs.method_label}"
+    wandb.init(project="sb3",
+                     name=wandb_name,
+                     entity="mingatum",
+                     save_code=True, )
+
+
+    policy = ImpalaCNN(
+        obs_space=train_venv.observation_space,
+        num_outputs=train_venv.action_space.n,
+    )
 
     # Create agent and train.
     optimizer = torch.optim.Adam(policy.parameters(), lr=configs.lr, eps=1e-5)
